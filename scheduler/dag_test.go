@@ -41,6 +41,10 @@ func TestAdd(t *testing.T) {
 		t.Error(err)
 	}
 
+	if err := dag.AddVertex("dd", "hello", []string{"foo", "bar", "cc"}); err != nil {
+		t.Error(err)
+	}
+
 	//check dependence ring
 	if err := dag.AddVertex("ring", "hello", []string{"foo", "ring", "bar"}); err == nil {
 		t.Error("should be error")
@@ -106,6 +110,7 @@ func TestDel(t *testing.T) {
 	}
 
 	dag.RemoveVertexByName("foo")
+	dag.RemoveVertexByName("bar")
 
 	dag.travel(f)
 

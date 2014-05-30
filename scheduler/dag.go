@@ -168,13 +168,17 @@ func (self *DGraph) travel(f func(v *Vertex)) {
 func (self *DGraph) ExportDot(fname string) {
 	relations := make(map[string]string)
 	f := func(v *Vertex) {
+		if len(v.OutEdge) == 0 {
+			relations[v.Name] = ""
+			return
+		}
 		for _, c := range v.OutEdge {
 			relations[v.Name+" -> "+c.Name] = ""
 		}
 	}
 
 	self.travel(f)
-
+	os.Remove(fname)
 	file, err := os.OpenFile(fname, os.O_CREATE|os.O_RDWR, 0666) // For read access.
 	if err != nil {
 		log.Fatal(err)
