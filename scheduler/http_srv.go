@@ -1,7 +1,8 @@
 package scheduler
 
 import (
-	"fmt"
+	"encoding/json"
+	"io/ioutil"
 	"log"
 	"net/http"
 )
@@ -10,12 +11,45 @@ type Server struct {
 	addr string
 }
 
+func response(w http.ResponseWriter, status int, content string) {
+	w.WriteHeader(http.StatusBadRequest)
+	w.Write([]byte(content))
+}
+
 func jobsListHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "hello world")
+	jobs := GetJobList()
+	if jobs != nil && len(jobs) > 0 {
+		content, _ := json.MarshalIndent(jobs, " ", "  ")
+		response(w, http.StatusOK, string(content))
+		return
+	}
+	response(w, http.StatusOK, "[]")
+}
+
+func newJobHandler(w http.ResponseWriter, r *http.Request) {
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		response(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	var job Job
+	err = json.Unmarshal(b, &job)
+	if err != nil {
+		response(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	err = sharedDbMap.Insert(&job)
+	if err != nil {
+		response(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	content, _ := json.MarshalIndent(job, " ", "  ")
+	response(w, http.StatusOK, string(content))
 }
 
 func (srv *Server) Serve() {
-	http.HandleFunc("/jobs/list", jobsListHandler)
+	http.HandleFunc("/job/list", jobsListHandler)
+	http.HandleFunc("/job/new", newJobHandler)
 	addr, _ := globalCfg.ReadString("http_addr", ":9090")
 	log.Fatal(http.ListenAndServe(addr, nil))
 }
