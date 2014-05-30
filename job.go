@@ -7,27 +7,27 @@ import (
 )
 
 type Job struct {
-	Id            int64  `db:"id"`
-	Name          string `db:"name"`    // 512, unique
-	Command       string `db:"command"` // 4096
-	Epsilon       string `db:"epsilon"`
-	Executor      string `db:"executor"`       // 4096
-	ExecutorFlags string `db:"executor_flags"` // 4096
-	Retries       int    `db:"retries"`
-	Owner         string `db:"owner"`
-	Async         bool   `db:"async"`
-	SuccessCnt    int    `db:"success_cnt"`
-	ErrCnt        int    `db:"error_cnt"`
-	CreateTs      int64  `db:"create_ts"`
-	LastSuccess   int64  `db:"last_success"`
-	LastErr       int64  `db:"last_error"`
-	Cpus          int    `db:"cpus"`
-	Mem           int    `db:"mem"`
-	Disk          int64  `db:"disk"`
-	Disabled      bool   `db:"disabled"`
-	Uris          string `db:"uris"`     // 2048
-	Schedule      string `db:"schedule"` // 255, crontab expr
-	Parents       string `db:"parents"`  // 4096
+	Id            int64  `db:"id", json:"id"`
+	Name          string `db:"name", json:"name"`       // 512, unique
+	Command       string `db:"command", json:"command"` // 4096
+	Epsilon       string `db:"epsilon, json:"epsilon`
+	Executor      string `db:"executor", json:"executor"`             // 4096
+	ExecutorFlags string `db:"executor_flags", json:"executor_flags"` // 4096
+	Retries       int    `db:"retries", json:"retries"`
+	Owner         string `db:"owner", json:"owner"`
+	Async         bool   `db:"async", json:"async"`
+	SuccessCnt    int    `db:"success_cnt", json:"success_cnt"`
+	ErrCnt        int    `db:"error_cnt", json:"error_cnt"`
+	CreateTs      int64  `db:"create_ts", json:"create_ts"`
+	LastSuccess   int64  `db:"last_success", json:"last_success"`
+	LastErr       int64  `db:"last_error", json:"last_error"`
+	Cpus          int    `db:"cpus", json:"cpus"`
+	Mem           int    `db:"mem", json:"mem"`
+	Disk          int64  `db:"disk", json:"disk"`
+	Disabled      bool   `db:"disabled", json:"disabled"`
+	Uris          string `db:"uris", json:"uris"`         // 2048
+	Schedule      string `db:"schedule", json:"schedule"` // 255, crontab expr
+	Parents       string `db:"parents", json:"parents"`   // 4096
 }
 
 func GetJobList() []Job {
