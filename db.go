@@ -11,6 +11,10 @@ import (
 var sharedDbMap *gorp.DbMap
 
 func init() {
+	InitSharedDbMap()
+}
+
+func InitSharedDbMap() {
 	sharedDbMap = NewDbMap()
 }
 

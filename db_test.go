@@ -8,7 +8,10 @@ import (
 )
 
 func TestDbMap(t *testing.T) {
-	dbMap := NewDbMap()
+	InitSharedDbMap()
+	defer func() {
+		os.Remove("/tmp/test.db")
+	}()
 	j := &Job{
 		Name:    "Test",
 		Command: "ls",
@@ -17,12 +20,12 @@ func TestDbMap(t *testing.T) {
 
 	j2 := Job{}
 
-	err := dbMap.Insert(j)
+	err := sharedDbMap.Insert(j)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = dbMap.SelectOne(&j2, "select * from jobs where name = ?", j.Name)
+	err = sharedDbMap.SelectOne(&j2, "select * from jobs where name = ?", j.Name)
 	if err != nil {
 		t.Error(err)
 	}
@@ -34,7 +37,7 @@ func TestDbMap(t *testing.T) {
 }
 
 func TestJobDependency(t *testing.T) {
-	dbMap := NewDbMap()
+	InitSharedDbMap()
 	defer func() {
 		os.Remove("/tmp/test.db")
 	}()
@@ -44,10 +47,10 @@ func TestJobDependency(t *testing.T) {
 	j3 := &Job{Name: "j3", Parents: "j1"}
 	j4 := &Job{Name: "j4", Parents: "j2,j3"}
 
-	dbMap.Insert(j1)
-	dbMap.Insert(j2)
-	dbMap.Insert(j3)
-	dbMap.Insert(j4)
+	sharedDbMap.Insert(j1)
+	sharedDbMap.Insert(j2)
+	sharedDbMap.Insert(j3)
+	sharedDbMap.Insert(j4)
 
 	parents := j4.GetParentJobs()
 	if parents == nil || len(parents) != 2 {
@@ -55,6 +58,24 @@ func TestJobDependency(t *testing.T) {
 	} else {
 		log.Println(parents[0].Name, parents[1].Name)
 	}
+
+	err := j2.Disable(true)
+	if err != nil {
+		t.Error(err)
+	}
+
+	parents = j4.GetParentJobs()
+	if parents == nil || len(parents) != 1 {
+		t.Error("get parents error")
+	} else {
+		log.Println(parents[0].Name)
+	}
+
+	parents = j1.GetParentJobs()
+	if parents != nil {
+		t.Error("j1 have no parents")
+	}
+
 }
 
 func TestAutoRun(t *testing.T) {

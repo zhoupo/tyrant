@@ -2,7 +2,6 @@ package tyrant
 
 import (
 	"github.com/gorhill/cronexpr"
-	log "github.com/ngaut/logging"
 	"strings"
 	"time"
 )
@@ -33,7 +32,7 @@ type Job struct {
 
 func GetJobList() []Job {
 	var jobs []Job
-	_, err := sharedDbMap.Select(&jobs, "select * from jobs where disabled = FALSE order by create_ts desc")
+	_, err := sharedDbMap.Select(&jobs, "select * from jobs order by create_ts desc")
 	if err != nil {
 		return nil
 	}
@@ -50,12 +49,12 @@ func GetJobByName(name string) (*Job, error) {
 }
 
 func GetJobById(id int) (*Job, error) {
-	var job *Job
+	var job Job
 	err := sharedDbMap.SelectOne(&job, "select * from jobs where id=?", id)
 	if err != nil {
 		return nil, err
 	}
-	return job, nil
+	return &job, nil
 }
 
 func (j *Job) AutoRunSignal() (bool, <-chan *Job) {
@@ -81,17 +80,20 @@ func (j *Job) AutoRunSignal() (bool, <-chan *Job) {
 	return true, c
 }
 
+func (j *Job) Disable(b bool) error {
+	j.Disabled = b
+	_, err := sharedDbMap.Update(j)
+	return err
+}
+
 func (j *Job) GetParentJobs() []*Job {
 	var jobs []*Job
 	parentNames := strings.Split(j.Parents, ",")
 	for _, name := range parentNames {
 		name := strings.Trim(name, " \t")
-		log.Info(name)
 		job, err := GetJobByName(name)
-		if err == nil {
+		if err == nil && job.Disabled == false {
 			jobs = append(jobs, job)
-		} else {
-			log.Debug(err)
 		}
 	}
 	return jobs
