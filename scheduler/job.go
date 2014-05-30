@@ -8,8 +8,7 @@ import (
 
 type Job struct {
 	Id            int64  `db:"id" json:"id"`
-	Name          string `db:"name" json:"name"`       // 512, unique
-	Command       string `db:"command" json:"command"` // 4096
+	Name          string `db:"name" json:"name"` // 512, unique
 	Epsilon       string `db:"epsilon" json:"epsilon"`
 	Executor      string `db:"executor" json:"executor"`             // 4096
 	ExecutorFlags string `db:"executor_flags" json:"executor_flags"` // 4096
@@ -76,7 +75,6 @@ func (j *Job) AutoRunSignal() (bool, <-chan *Job) {
 			}
 		}
 	}()
-
 	return true, c
 }
 

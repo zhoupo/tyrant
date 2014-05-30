@@ -26,6 +26,10 @@ func jobsListHandler(w http.ResponseWriter, r *http.Request) {
 	response(w, http.StatusOK, "[]")
 }
 
+func updateJobHandler(w http.ResponseWriter, r *http.Request) {
+	response(w, http.StatusOK, "not implemented yet")
+}
+
 func newJobHandler(w http.ResponseWriter, r *http.Request) {
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -50,6 +54,7 @@ func newJobHandler(w http.ResponseWriter, r *http.Request) {
 func (srv *Server) Serve() {
 	http.HandleFunc("/job/list", jobsListHandler)
 	http.HandleFunc("/job/new", newJobHandler)
+	http.HandleFunc("/job/update", updateJobHandler)
 	addr, _ := globalCfg.ReadString("http_addr", ":9090")
 	log.Fatal(http.ListenAndServe(addr, nil))
 }
