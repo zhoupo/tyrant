@@ -2,6 +2,8 @@ package tyrant
 
 import (
 	"github.com/gorhill/cronexpr"
+	log "github.com/ngaut/logging"
+	"strings"
 	"time"
 )
 
@@ -29,6 +31,33 @@ type Job struct {
 	Parents       string `db:"parents"`  // 4096
 }
 
+func GetJobList() []Job {
+	var jobs []Job
+	_, err := sharedDbMap.Select(&jobs, "select * from jobs where disabled = FALSE order by create_ts desc")
+	if err != nil {
+		return nil
+	}
+	return jobs
+}
+
+func GetJobByName(name string) (*Job, error) {
+	var job Job
+	err := sharedDbMap.SelectOne(&job, "select * from jobs where name=?", name)
+	if err != nil {
+		return nil, err
+	}
+	return &job, nil
+}
+
+func GetJobById(id int) (*Job, error) {
+	var job *Job
+	err := sharedDbMap.SelectOne(&job, "select * from jobs where id=?", id)
+	if err != nil {
+		return nil, err
+	}
+	return job, nil
+}
+
 func (j *Job) AutoRunSignal() (bool, <-chan *Job) {
 	c := make(chan *Job)
 	if len(j.Schedule) <= 0 {
@@ -50,4 +79,20 @@ func (j *Job) AutoRunSignal() (bool, <-chan *Job) {
 	}()
 
 	return true, c
+}
+
+func (j *Job) GetParentJobs() []*Job {
+	var jobs []*Job
+	parentNames := strings.Split(j.Parents, ",")
+	for _, name := range parentNames {
+		name := strings.Trim(name, " \t")
+		log.Info(name)
+		job, err := GetJobByName(name)
+		if err == nil {
+			jobs = append(jobs, job)
+		} else {
+			log.Debug(err)
+		}
+	}
+	return jobs
 }

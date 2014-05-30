@@ -8,6 +8,12 @@ import (
 	log "github.com/ngaut/logging"
 )
 
+var sharedDbMap *gorp.DbMap
+
+func init() {
+	sharedDbMap = NewDbMap()
+}
+
 func NewDbMap() *gorp.DbMap {
 	dsn, _ := globalCfg.ReadString("dsn", "root:root@/tyrant")
 	dbType, _ := globalCfg.ReadString("db", "mysql")
