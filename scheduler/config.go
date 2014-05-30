@@ -1,4 +1,4 @@
-package tyrant
+package scheduler
 
 import (
 	"github.com/c4pt0r/cfg"
@@ -7,8 +7,8 @@ import (
 
 var globalCfg *cfg.Cfg
 
-func init() {
-	globalCfg = cfg.NewCfg("config.ini")
+func InitConfig(path string) {
+	globalCfg = cfg.NewCfg(path)
 	err := globalCfg.Load()
 	if err != nil {
 		log.Fatal(err)

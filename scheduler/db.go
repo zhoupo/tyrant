@@ -1,4 +1,4 @@
-package tyrant
+package scheduler
 
 import (
 	"database/sql"
@@ -9,10 +9,6 @@ import (
 )
 
 var sharedDbMap *gorp.DbMap
-
-func init() {
-	InitSharedDbMap()
-}
 
 func InitSharedDbMap() {
 	sharedDbMap = NewDbMap()

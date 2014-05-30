@@ -1,4 +1,4 @@
-package tyrant
+package scheduler
 
 import (
 	"github.com/gorhill/cronexpr"

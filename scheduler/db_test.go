@@ -1,4 +1,4 @@
-package tyrant
+package scheduler
 
 import (
 	"log"
@@ -6,6 +6,10 @@ import (
 	"testing"
 	"time"
 )
+
+func init() {
+	InitConfig("../config.ini")
+}
 
 func TestDbMap(t *testing.T) {
 	InitSharedDbMap()
