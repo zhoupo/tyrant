@@ -2,6 +2,8 @@ package scheduler
 
 import (
 	"fmt"
+	"io"
+	"os"
 
 	log "github.com/ngaut/logging"
 )
@@ -38,18 +40,37 @@ func (self *Vertex) travel(f func(v *Vertex)) {
 	}
 }
 
+func findByName(vertexs []*Vertex, name string) int {
+	for i, v := range vertexs {
+		if v.Name == name {
+			return i
+		}
+	}
+
+	return -1
+}
+
+func (self *Vertex) removeChild(name string) error {
+	idx := findByName(self.OutEdge, name)
+	if idx == -1 {
+		return fmt.Errorf("%s not exist", name)
+	}
+	//remove it from out edge
+	self.OutEdge = append(self.OutEdge[:idx], self.OutEdge[idx+1:]...)
+	return nil
+}
+
 func (self *DGraph) checkParent(v *Vertex) error {
 	for _, in := range v.InEdge {
 		parent := self.root.lookup(in.Name) //parent should exist, akka: dependency should be valid
 		if parent == nil {
 			return fmt.Errorf("parent %s not exist", in.Name)
 		}
-
-		for _, child := range parent.OutEdge {
-			if child.Name == v.Name {
-				return fmt.Errorf("parent %s already has child %s", in.Name, v.Name)
-			}
+		//should not in children node
+		if findByName(parent.OutEdge, v.Name) != -1 {
+			return fmt.Errorf("parent %s already has child %s", in.Name, v.Name)
 		}
+
 	}
 
 	return nil
@@ -86,6 +107,7 @@ func (self *DGraph) AddVertex(name string, val interface{}, in []string) error {
 		if self.Lookup(name) != nil {
 			return fmt.Errorf("%s already exist", name)
 		}
+		v.InEdge = append(v.InEdge, self.root)
 		self.root.OutEdge = append(self.root.OutEdge, v)
 		return nil
 	}
@@ -96,10 +118,64 @@ func (self *DGraph) AddVertex(name string, val interface{}, in []string) error {
 	return self.add(v)
 }
 
+func (self *DGraph) removeVertex(v *Vertex) {
+	for _, p := range v.InEdge {
+		p.removeChild(v.Name)
+		p.OutEdge = append(p.OutEdge, v.OutEdge...)
+	}
+
+	for _, c := range v.OutEdge {
+		idx := findByName(c.InEdge, v.Name)
+		if idx == -1 {
+			log.Fatal("should never happend")
+		}
+		//remove parent
+		c.InEdge = append(c.InEdge[:idx], c.InEdge[idx+1:]...)
+		//add new parents
+		for _, in := range v.InEdge {
+			if index := findByName(c.InEdge, in.Name); index == -1 {
+				c.InEdge = append(c.InEdge, in)
+			}
+		}
+	}
+}
+
+func (self *DGraph) RemoveVertexByName(name string) {
+	v := self.Lookup(name)
+	if v != nil {
+		self.removeVertex(v)
+	}
+}
+
 func (self *DGraph) travel(f func(v *Vertex)) {
 	for _, v := range self.root.OutEdge {
 		v.travel(f)
 	}
+}
+
+func (self *DGraph) ExportDot(fname string) {
+	relations := make(map[string]string)
+	f := func(v *Vertex) {
+		for _, c := range v.OutEdge {
+			relations[v.Name] = c.Name
+		}
+	}
+
+	self.travel(f)
+
+	file, err := os.OpenFile(fname, os.O_CREATE|os.O_RDWR, 0666) // For read access.
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	io.WriteString(file, "digraph job {\n")
+
+	for k, v := range relations {
+		io.WriteString(file, k+" -> "+v)
+		io.WriteString(file, "\n")
+	}
+
+	io.WriteString(file, "}\n")
 }
 
 func (self *DGraph) Lookup(name string) *Vertex {
