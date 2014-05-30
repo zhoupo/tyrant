@@ -34,8 +34,8 @@ func (self *Vertex) lookup(name string) *Vertex {
 }
 
 func (self *Vertex) travel(f func(v *Vertex)) {
-	f(self)
 	for _, v := range self.OutEdge {
+		f(v)
 		v.travel(f)
 	}
 }
@@ -112,6 +112,9 @@ func (self *DGraph) AddVertex(name string, val interface{}, in []string) error {
 		return nil
 	}
 	for _, n := range in {
+		if name == n { //check dependence ring
+			fmt.Errorf("job %s can't depend on self", name)
+		}
 		v.InEdge = append(v.InEdge, &Vertex{Name: n})
 	}
 
@@ -121,7 +124,14 @@ func (self *DGraph) AddVertex(name string, val interface{}, in []string) error {
 func (self *DGraph) removeVertex(v *Vertex) {
 	for _, p := range v.InEdge {
 		p.removeChild(v.Name)
-		p.OutEdge = append(p.OutEdge, v.OutEdge...)
+		//check the same child
+		for _, o := range v.OutEdge {
+			//already exist
+			if findByName(p.OutEdge, o.Name) >= 0 {
+				continue
+			}
+			p.OutEdge = append(p.OutEdge, o)
+		}
 	}
 
 	for _, c := range v.OutEdge {
@@ -147,8 +157,10 @@ func (self *DGraph) RemoveVertexByName(name string) {
 	}
 }
 
+//BFS
 func (self *DGraph) travel(f func(v *Vertex)) {
 	for _, v := range self.root.OutEdge {
+		f(v)
 		v.travel(f)
 	}
 }
@@ -157,7 +169,7 @@ func (self *DGraph) ExportDot(fname string) {
 	relations := make(map[string]string)
 	f := func(v *Vertex) {
 		for _, c := range v.OutEdge {
-			relations[v.Name] = c.Name
+			relations[v.Name+" -> "+c.Name] = ""
 		}
 	}
 
@@ -170,8 +182,8 @@ func (self *DGraph) ExportDot(fname string) {
 
 	io.WriteString(file, "digraph job {\n")
 
-	for k, v := range relations {
-		io.WriteString(file, k+" -> "+v)
+	for k, _ := range relations {
+		io.WriteString(file, k)
 		io.WriteString(file, "\n")
 	}
 

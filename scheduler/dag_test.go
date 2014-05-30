@@ -30,10 +30,20 @@ func TestAdd(t *testing.T) {
 		t.Error("lookup failed")
 	}
 
+	//check name unique
+	if err := dag.AddVertex("bar", "hello", []string{"foo"}); err == nil {
+		t.Error(err)
+	}
+
 	dag.travel(f)
 
 	if err := dag.AddVertex("cc", "hello", []string{"foo", "bar"}); err != nil {
 		t.Error(err)
+	}
+
+	//check dependence ring
+	if err := dag.AddVertex("ring", "hello", []string{"foo", "ring", "bar"}); err == nil {
+		t.Error("should be error")
 	}
 
 	dag.travel(f)
