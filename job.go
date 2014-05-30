@@ -1,5 +1,10 @@
 package tyrant
 
+import (
+	"github.com/gorhill/cronexpr"
+	"time"
+)
+
 type Job struct {
 	Id            int64  `db:"id"`
 	Name          string `db:"name"`    // 512, unique
@@ -20,6 +25,29 @@ type Job struct {
 	Disk          int64  `db:"disk"`
 	Disabled      bool   `db:"disabled"`
 	Uris          string `db:"uris"`     // 2048
-	Schedule      string `db:"schedule"` // 255
+	Schedule      string `db:"schedule"` // 255, crontab expr
 	Parents       string `db:"parents"`  // 4096
+}
+
+func (j *Job) AutoRunSignal() (bool, <-chan *Job) {
+	c := make(chan *Job)
+	if len(j.Schedule) <= 0 {
+		return false, nil
+	}
+
+	go func() {
+		for {
+			now := time.Now()
+			nextTime := cronexpr.MustParse(j.Schedule).Next(now)
+			dur := nextTime.Sub(now)
+			select {
+			case <-time.After(dur):
+				{
+					c <- j
+				}
+			}
+		}
+	}()
+
+	return true, c
 }
