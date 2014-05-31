@@ -76,6 +76,29 @@ func TestSimpleDel(t *testing.T) {
 	dag.ExportDot("simpleDel.dag")
 }
 
+func TestDependency(t *testing.T) {
+	dag := &DGraph{root: &Vertex{}}
+	if err := dag.AddVertex("foo", "hi", nil); err != nil {
+		t.Error(err)
+	}
+
+	noDepFun := func(v *Vertex) {
+		if v.hasDependency() {
+			t.Error("should not has dependency")
+		}
+	}
+	dag.travel(noDepFun)
+
+	depFun := func(v *Vertex) {
+		if v.Name == "bar" && !v.hasDependency() {
+			t.Error("should has dependency")
+		}
+	}
+
+	dag.AddVertex("bar", "xx", []string{"foo"})
+	dag.travel(depFun)
+}
+
 func TestDel(t *testing.T) {
 	dag := &DGraph{root: &Vertex{}}
 	dag.RemoveVertexByName("xx")

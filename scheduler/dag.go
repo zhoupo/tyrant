@@ -60,6 +60,28 @@ func (self *Vertex) removeChild(name string) error {
 	return nil
 }
 
+func (self *Vertex) hasDependency() bool {
+	if len(self.InEdge) > 1 {
+		return true
+	}
+
+	if len(self.InEdge) == 0 {
+		return false
+	}
+
+	//now, we have only 1 in edge
+	if len(self.InEdge[0].InEdge) == 0 { //root
+		return false
+	}
+
+	return true
+}
+
+func NewDag() *DGraph {
+	dag := &DGraph{root: &Vertex{}}
+	return dag
+}
+
 func (self *DGraph) checkParent(v *Vertex) error {
 	for _, in := range v.InEdge {
 		parent := self.root.lookup(in.Name) //parent should exist, akka: dependency should be valid
