@@ -22,7 +22,7 @@ type DagMeta struct {
 	LastErrMsg    string `db:"last_error_msg" json:"last_error_msg"`
 }
 
-func NewDag(name, schedule string) *DagMeta {
+func NewDagMeta(name, schedule string) *DagMeta {
 	return &DagMeta{
 		Name:     name,
 		Schedule: schedule,
