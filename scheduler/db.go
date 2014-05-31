@@ -32,13 +32,16 @@ func NewDbMap() *gorp.DbMap {
 	}
 
 	tbl := dbmap.AddTableWithName(Job{}, "jobs").SetKeys(true, "Id")
-
 	tbl.ColMap("name").SetMaxSize(512).SetUnique(true)
 	tbl.ColMap("command").SetMaxSize(4096)
-	tbl.ColMap("parents").SetMaxSize(4096)
 	tbl.ColMap("executor").SetMaxSize(4096)
 	tbl.ColMap("executor_flags").SetMaxSize(4096)
 	tbl.ColMap("uris").SetMaxSize(2048)
+
+	dbmap.AddTableWithName(DagJob{}, "dagjobs").SetKeys(true, "Id")
+
+	tbl = dbmap.AddTableWithName(DagMeta{}, "dagmeta").SetKeys(true, "Id")
+	tbl.ColMap("name").SetMaxSize(512).SetUnique(true)
 
 	err = dbmap.CreateTablesIfNotExists()
 
