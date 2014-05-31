@@ -206,14 +206,13 @@ func (self *DGraph) ExportDot(fname string) {
 		log.Fatal(err)
 	}
 
-	io.WriteString(file, "digraph job {\n")
+	io.WriteString(file, "digraph job {")
 
 	for k, _ := range relations {
-		io.WriteString(file, "\n"+k)
-		io.WriteString(file, "\n")
+		io.WriteString(file, "\n\t"+k)
 	}
 
-	io.WriteString(file, "}\n")
+	io.WriteString(file, "\n}")
 }
 
 func (self *DGraph) Lookup(name string) *Vertex {
