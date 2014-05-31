@@ -121,7 +121,7 @@ func (self *DGraph) add(v *Vertex) error {
 }
 
 func (self *DGraph) AddVertex(name string, val interface{}, in []string) error {
-	log.Debug("AddVertex", name, val)
+	//log.Debug("AddVertex", name, val)
 	v := &Vertex{Name: name, Value: val,
 		InEdge: make([]*Vertex, 0, len(in)),
 	}

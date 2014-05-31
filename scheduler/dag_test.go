@@ -11,7 +11,7 @@ func TestAdd(t *testing.T) {
 	}
 
 	f := func(v *Vertex) {
-		println(v.Name)
+		//println(v.Name)
 	}
 
 	v := dag.Lookup("foo")
@@ -65,7 +65,7 @@ func TestSimpleDel(t *testing.T) {
 
 	cnt := 0
 	f := func(v *Vertex) {
-		println("simple del", v.Name)
+		//println("simple del", v.Name)
 		cnt++
 	}
 	dag.travel(f)
@@ -112,7 +112,7 @@ func TestDel(t *testing.T) {
 	}
 
 	f := func(v *Vertex) {
-		println(v.Name)
+		//println(v.Name)
 	}
 
 	v := dag.Lookup("foo")

@@ -25,7 +25,7 @@ func NewTaskDag(name string) *TaskDag {
 	return td
 }
 
-//todo: just need to search first level
+//todo: just need to search first level, which would be faster
 func (self *TaskDag) GetReadyTask() []*Task {
 	ready := make(map[string]*Vertex)
 	filter := func(v *Vertex) {
