@@ -10,6 +10,7 @@ const (
 )
 
 type Task struct {
+	Name string
 }
 
 type TaskDag struct {
@@ -24,9 +25,11 @@ func NewTaskDag(name string) *TaskDag {
 	return td
 }
 
+//todo: just need to search first level
 func (self *TaskDag) GetReadyTask() []*Task {
 	ready := make(map[string]*Vertex)
 	filter := func(v *Vertex) {
+		//log.Debugf("%+v", v)
 		if !v.hasDependency() {
 			ready[v.Name] = v
 		}
@@ -43,7 +46,7 @@ func (self *TaskDag) GetReadyTask() []*Task {
 		tasks = append(tasks, v.Value.(*Task))
 	}
 
-	return nil
+	return tasks
 }
 
 type TaskScheduler struct {

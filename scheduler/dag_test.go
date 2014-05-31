@@ -97,6 +97,11 @@ func TestDependency(t *testing.T) {
 
 	dag.AddVertex("bar", "xx", []string{"foo"})
 	dag.travel(depFun)
+
+	v := dag.Lookup("foo")
+	if v.hasDependency() {
+		t.Error("should has no dependency")
+	}
 }
 
 func TestDel(t *testing.T) {

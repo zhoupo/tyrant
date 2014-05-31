@@ -209,7 +209,7 @@ func (self *DGraph) ExportDot(fname string) {
 	io.WriteString(file, "digraph job {\n")
 
 	for k, _ := range relations {
-		io.WriteString(file, k)
+		io.WriteString(file, "\n"+k)
 		io.WriteString(file, "\n")
 	}
 
