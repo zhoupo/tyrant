@@ -1,11 +1,13 @@
 package resourceScheduler
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
+
+	log "github.com/ngaut/logging"
 
 	"code.google.com/p/goprotobuf/proto"
 	"github.com/ngaut/tyrant/scheduler"
@@ -17,10 +19,27 @@ type ResMan struct {
 	exit chan bool
 }
 
+func NewResMan() *ResMan {
+	return &ResMan{s: scheduler.NewTaskScheduler(), exit: make(chan bool)}
+}
+
+type TyrantTaskId struct {
+	DagName  string
+	TaskName string
+}
+
+func genTaskId(dagName string, taskName string) string {
+	if str, err := json.Marshal(TyrantTaskId{DagName: dagName, TaskName: taskName}); err != nil {
+		log.Fatal(err)
+	} else {
+		return string(str)
+	}
+
+	return ""
+}
+
 func (self *ResMan) Run() {
-	taskLimit := 5
 	taskId := 0
-	exit := make(chan bool)
 	localExecutor, _ := executorPath()
 
 	master := flag.String("master", "localhost:5050", "Location of leading Mesos master")
@@ -48,11 +67,8 @@ func (self *ResMan) Run() {
 
 		Scheduler: &mesos.Scheduler{
 			ResourceOffers: func(driver *mesos.SchedulerDriver, offers []mesos.Offer) {
-				println("ResourceOffers")
+				log.Debug("ResourceOffers")
 				for _, offer := range offers {
-					driver.DeclineOffer(offer.Id)
-					continue
-
 					td := self.s.GetReadyDag()
 					if td == nil {
 						driver.DeclineOffer(offer.Id)
@@ -64,6 +80,8 @@ func (self *ResMan) Run() {
 						driver.DeclineOffer(offer.Id)
 						return
 					}
+
+					//todo:check if schedule time is match
 
 					taskId++
 					fmt.Printf("Launching task: %d, name:%s\n", taskId, ts[0].Name)
@@ -81,7 +99,7 @@ func (self *ResMan) Run() {
 						mesos.TaskInfo{
 							Name: proto.String("go-task"),
 							TaskId: &mesos.TaskID{
-								Value: proto.String("go-task-" + strconv.Itoa(taskId)),
+								Value: proto.String(genTaskId(td.DagName, ts[0].Name)),
 							},
 							SlaveId:  offer.SlaveId,
 							Executor: executor,
@@ -92,18 +110,38 @@ func (self *ResMan) Run() {
 						},
 					}
 
+					self.s.SetTaskDagStateRunning(td.DagName)
+
 					driver.LaunchTasks(offer.Id, tasks)
 				}
 			},
 
 			StatusUpdate: func(driver *mesos.SchedulerDriver, status mesos.TaskStatus) {
-				fmt.Println("Received task status: " + *status.Message)
-
-				if *status.State == mesos.TaskState_TASK_FINISHED {
-					taskLimit--
-					if taskLimit <= 0 {
-						exit <- true
+				taskId := *status.TaskId
+				log.Debug("Received task status: "+*status.Message+"taskId"+*taskId.Value, *status.State)
+				switch *status.State {
+				case mesos.TaskState_TASK_FINISHED:
+					var ti TyrantTaskId
+					err := json.Unmarshal([]byte(*taskId.Value), &ti)
+					if err != nil {
+						log.Fatal(err)
 					}
+					self.s.GetTaskDag(ti.DagName).RemoveTask(ti.TaskName)
+					//todo:remove from task
+				case mesos.TaskState_TASK_FAILED:
+					//todo: retry
+				case mesos.TaskState_TASK_KILLED:
+					//todo:
+				case mesos.TaskState_TASK_LOST:
+					//todo:
+				case mesos.TaskState_TASK_STAGING:
+					//todo: update something
+				case mesos.TaskState_TASK_STARTING:
+					//todo:update something
+				case mesos.TaskState_TASK_RUNNING:
+					//todo:update something
+				default:
+					panic("should never happend")
 				}
 			},
 

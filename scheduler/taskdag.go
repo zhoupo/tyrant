@@ -117,6 +117,10 @@ func (self *TaskScheduler) AddTaskDag(td *TaskDag) {
 	self.tds[td.DagName] = td
 }
 
+func (self *TaskScheduler) GetTaskDag(name string) *TaskDag {
+	return self.tds[name]
+}
+
 func (self *TaskScheduler) RemoveTaskDag(name string) {
 	delete(self.tds, name)
 	//todo: may be need to clean up running tasks
@@ -130,6 +134,15 @@ func (self *TaskScheduler) GetReadyDag() *TaskDag {
 	}
 
 	return nil
+}
+
+func (self *TaskScheduler) SetTaskDagStateRunning(name string, state int) {
+	td, ok := self.tds[name]
+	if !ok {
+		return
+	}
+
+	td.state = state
 }
 
 func (self *TaskScheduler) Refresh() {
