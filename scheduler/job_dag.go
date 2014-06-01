@@ -30,9 +30,8 @@ func NewDagMeta(name, schedule string) *DagMeta {
 	}
 }
 
-func NewDagJob(dag *DagMeta, jobName, parentJobName string) *DagJob {
+func NewDagJob(jobName, parentJobName string) *DagJob {
 	return &DagJob{
-		DagName:   dag.Name,
 		JobName:   jobName,
 		ParentJob: parentJobName,
 	}
@@ -76,4 +75,31 @@ func (dag *DagMeta) AutoRunSignal() (bool, <-chan *DagMeta) {
 		}
 	}()
 	return true, c
+}
+
+func (d *DagMeta) AddDagJob(j *DagJob) error {
+	j.DagName = d.Name
+	return sharedDbMap.Insert(j)
+}
+
+func (d *DagMeta) Save() error {
+	if d.Id <= 0 {
+		return sharedDbMap.Insert(d)
+	} else {
+		_, err := sharedDbMap.Update(d)
+		return err
+	}
+}
+
+func (d *DagMeta) Remove() error {
+	if d.Id > 0 {
+		cnt, err := sharedDbMap.Delete(d)
+		if cnt == 1 && err == nil {
+			d.Id = -1
+			return nil
+		}
+		return err
+	}
+	d.Id = -1
+	return nil
 }

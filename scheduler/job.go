@@ -53,3 +53,25 @@ func (j *Job) Disable(b bool) error {
 	_, err := sharedDbMap.Update(j)
 	return err
 }
+
+func (j *Job) Save() error {
+	if j.Id <= 0 {
+		return sharedDbMap.Insert(j)
+	} else {
+		_, err := sharedDbMap.Update(j)
+		return err
+	}
+}
+
+func (j *Job) Remove() error {
+	if j.Id > 0 {
+		cnt, err := sharedDbMap.Delete(j)
+		if cnt == 1 && err == nil {
+			j.Id = -1
+			return nil
+		}
+		return err
+	}
+	j.Id = -1
+	return nil
+}

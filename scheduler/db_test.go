@@ -36,4 +36,18 @@ func TestDbMap(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+
+	j2.Disabled = true
+	j2.Save()
+
+	j22, err := GetJobByName("Test")
+	if err != nil || j22 == nil || j22.Disabled == false {
+		t.Error("save job failed")
+	}
+
+	j22.Remove()
+	j3, err := GetJobByName("Test")
+	if j3 != nil {
+		t.Error("remove failed")
+	}
 }
