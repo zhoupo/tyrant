@@ -190,7 +190,7 @@ func (self *DGraph) travel(f func(v *Vertex)) {
 func (self *DGraph) ExportDot(fname string) {
 	relations := make(map[string]string)
 	f := func(v *Vertex) {
-		if len(v.OutEdge) == 0 {
+		if len(v.OutEdge) == 0 && !v.hasDependency() {
 			relations[v.Name] = ""
 			return
 		}

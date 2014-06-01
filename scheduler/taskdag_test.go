@@ -5,7 +5,7 @@ import (
 )
 
 func TestPickTask(t *testing.T) {
-	td := NewTaskDag("test")
+	td := NewTaskDag("test", nil)
 	dag := td.dag
 	for i := 0; i < 100; i++ {
 		if err := dag.AddVertex("foo", &Task{Name: "foo"}, nil); err != nil {
