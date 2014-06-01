@@ -27,7 +27,29 @@ func jobsListHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateJobHandler(w http.ResponseWriter, r *http.Request) {
-	response(w, http.StatusOK, "not implemented yet")
+	r.ParseForm()
+	name := r.FormValue("name")
+
+	if JobExists(name) {
+		b, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			response(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		var job Job
+		err = json.Unmarshal(b, &job)
+		j, _ := GetJobByName(name)
+		if err != nil {
+			response(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		job.Id = j.Id
+		job.Save()
+		response(w, http.StatusOK, string(b))
+		return
+	} else {
+		response(w, http.StatusNotFound, "no such job")
+	}
 }
 
 func newJobHandler(w http.ResponseWriter, r *http.Request) {

@@ -31,6 +31,18 @@ func GetJobList() []Job {
 	return jobs
 }
 
+func JobExists(name string) bool {
+	var cnt int
+	err := sharedDbMap.SelectOne(&cnt, "select count(*) from jobs where name=?", name)
+	if err != nil {
+		return false
+	}
+	if cnt <= 1 {
+		return false
+	}
+	return true
+}
+
 func GetJobByName(name string) (*Job, error) {
 	var job Job
 	err := sharedDbMap.SelectOne(&job, "select * from jobs where name=?", name)
@@ -48,6 +60,7 @@ func GetJobById(id int) (*Job, error) {
 	}
 	return &job, nil
 }
+
 func (j *Job) Disable(b bool) error {
 	j.Disabled = b
 	_, err := sharedDbMap.Update(j)
