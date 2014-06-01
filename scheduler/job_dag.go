@@ -46,6 +46,27 @@ func GetDagMetaList() []DagMeta {
 	return dags
 }
 
+func GetDagFromName(name string) *DagMeta {
+	var dag DagMeta
+	err := sharedDbMap.SelectOne(&dag, "select * from dagmeta where name=?", name)
+	if err != nil {
+		return nil
+	}
+	return &dag
+}
+
+func (j *DagJob) Save() error {
+	if j.Id <= 0 {
+		return sharedDbMap.Insert(j)
+	} else {
+		_, err := sharedDbMap.Update(j)
+		return err
+	}
+}
+func (j *DagJob) Remove() {
+	sharedDbMap.Delete(j)
+}
+
 func (dag *DagMeta) GetDagJobs() []DagJob {
 	var dagJobs []DagJob
 	_, err := sharedDbMap.Select(&dagJobs, "select * from dagjobs where dag_name = ?", dag.Name)
@@ -93,6 +114,9 @@ func (d *DagMeta) Save() error {
 
 func (d *DagMeta) Remove() error {
 	if d.Id > 0 {
+		for _, j := range d.GetDagJobs() {
+			(&j).Remove()
+		}
 		cnt, err := sharedDbMap.Delete(d)
 		if cnt == 1 && err == nil {
 			d.Id = -1
