@@ -12,7 +12,7 @@ type Server struct {
 }
 
 func response(w http.ResponseWriter, status int, content string) {
-	w.WriteHeader(http.StatusBadRequest)
+	w.WriteHeader(status)
 	w.Write([]byte(content))
 }
 

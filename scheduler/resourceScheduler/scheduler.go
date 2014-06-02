@@ -74,7 +74,7 @@ func (self *ResMan) Run() {
 						driver.DeclineOffer(offer.Id)
 						return
 					}
-
+					log.Debug("%+v", td)
 					ts := td.GetReadyTask()
 					if len(ts) == 0 {
 						driver.DeclineOffer(offer.Id)

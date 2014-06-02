@@ -136,13 +136,13 @@ func (self *TaskScheduler) GetReadyDag() *TaskDag {
 	return nil
 }
 
-func (self *TaskScheduler) SetTaskDagStateRunning(name string, state int) {
+func (self *TaskScheduler) SetTaskDagStateRunning(name string) {
 	td, ok := self.tds[name]
 	if !ok {
 		return
 	}
 
-	td.state = state
+	td.state = taskRuning
 }
 
 func (self *TaskScheduler) Refresh() {
