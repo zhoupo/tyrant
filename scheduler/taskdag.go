@@ -18,13 +18,13 @@ type Task struct {
 
 type TaskDag struct {
 	DagName string
-	dag     *DGraph
+	Dag     *DGraph
 	state   int
 	dagMeta *DagMeta
 }
 
 func NewTaskDag(name string, meta *DagMeta) *TaskDag {
-	td := &TaskDag{DagName: name, dag: NewDag(), state: taskCreate,
+	td := &TaskDag{DagName: name, Dag: NewDag(), state: taskCreate,
 		dagMeta: meta,
 	}
 	log.Debug("create TaskDag", name)
@@ -36,8 +36,14 @@ func getParents(parents string) []string {
 }
 
 func getRoot(jobs map[string]*DagJob, name string) string {
-	parents := getParents(name)
+	parentstr := jobs[name].ParentJob
+	parents := getParents(parentstr)
+	log.Debug(name, "parents", parents, len(parents))
 	for _, p := range parents {
+		if len(p) == 0 {
+			break
+		}
+
 		pp, ok := jobs[p]
 		if !ok || len(getParents(pp.JobName)) == 0 {
 			return p
@@ -50,21 +56,34 @@ func getRoot(jobs map[string]*DagJob, name string) string {
 
 func (self *TaskDag) addTask(jobs map[string]*DagJob) {
 	for name, _ := range jobs {
+		log.Debug("checking", name)
+		if len(name) == 0 {
+			log.Errorf("job name can't be empty")
+			continue
+		}
+
 		r := getRoot(jobs, name)
-		self.dag.AddVertex(r, &Task{Name: r, job: jobs[r]}, getParents(r))
+		log.Debugf("add %s to %s", r, self.DagName)
+		err := self.Dag.AddVertex(r, &Task{Name: r, job: jobs[r]}, getParents(jobs[name].ParentJob))
+		if err != nil {
+			log.Error(err)
+		}
 		delete(jobs, r)
 		return
 	}
 }
 
 func (self *TaskDag) BuildTaskDag(jobs []*DagJob) {
+	log.Debugf("BuildTaskDag:%+v", jobs)
 	m := make(map[string]*DagJob, len(jobs))
 	for _, j := range jobs {
 		m[j.JobName] = j
 	}
 
+	log.Debugf("DagJob map: %+v", m)
+
 	//todo: maybe need to clean up running tasks
-	self.dag = NewDag()
+	self.Dag = NewDag()
 	for i := 0; i < len(jobs); i++ {
 		self.addTask(m)
 	}
@@ -74,13 +93,13 @@ func (self *TaskDag) BuildTaskDag(jobs []*DagJob) {
 func (self *TaskDag) GetReadyTask() []*Task {
 	ready := make(map[string]*Vertex)
 	filter := func(v *Vertex) {
-		//log.Debugf("%+v", v)
+		log.Debugf("check dependency %+v", v)
 		if !v.hasDependency() {
 			ready[v.Name] = v
 		}
 	}
 
-	self.dag.travel(filter)
+	self.Dag.travel(filter)
 
 	if len(ready) == 0 {
 		return nil
@@ -95,7 +114,8 @@ func (self *TaskDag) GetReadyTask() []*Task {
 }
 
 func (self *TaskDag) RemoveTask(name string) {
-	self.dag.RemoveVertexByName(name)
+	log.Debugf("remove task %s from %s", name, self.DagName)
+	self.Dag.RemoveVertexByName(name)
 }
 
 type TaskScheduler struct {
@@ -113,6 +133,8 @@ func (self *TaskScheduler) AddTaskDag(td *TaskDag) {
 	if _, ok := self.tds[td.DagName]; ok {
 		return
 	}
+
+	log.Debugf("AddTaskDag: %+v", td)
 
 	self.tds[td.DagName] = td
 }
@@ -152,6 +174,8 @@ func (self *TaskScheduler) Refresh() {
 		if _, ok := self.tds[m.Name]; ok { //already exist
 			continue
 		}
+
+		log.Debugf("add dagMeta: %+v", m)
 
 		td := NewTaskDag(m.Name, &m)
 		tmp := m.GetDagJobs()

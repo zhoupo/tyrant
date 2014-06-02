@@ -3,7 +3,6 @@ package resourceScheduler
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -41,6 +40,7 @@ func genTaskId(dagName string, taskName string) string {
 func (self *ResMan) Run() {
 	taskId := 0
 	localExecutor, _ := executorPath()
+	log.Debug(localExecutor)
 
 	master := flag.String("master", "localhost:5050", "Location of leading Mesos master")
 	executorUri := flag.String("executor-uri", localExecutor, "URI of executor executable")
@@ -68,32 +68,37 @@ func (self *ResMan) Run() {
 		Scheduler: &mesos.Scheduler{
 			ResourceOffers: func(driver *mesos.SchedulerDriver, offers []mesos.Offer) {
 				log.Debug("ResourceOffers")
+				self.s.Refresh()
 				for _, offer := range offers {
 					td := self.s.GetReadyDag()
 					if td == nil {
 						driver.DeclineOffer(offer.Id)
 						return
 					}
-					log.Debug("%+v", td)
+					log.Debugf("got ready dag: %+v", td)
+					td.Dag.ExportDot(td.DagName + ".dot")
 					ts := td.GetReadyTask()
 					if len(ts) == 0 {
 						driver.DeclineOffer(offer.Id)
 						return
 					}
 
+					log.Debugf("%+v", ts)
+
 					//todo:check if schedule time is match
 
 					taskId++
-					fmt.Printf("Launching task: %d, name:%s\n", taskId, ts[0].Name)
+					log.Debugf("Launching task: %d, name:%s\n", taskId, ts[0].Name)
 					job, err := scheduler.GetJobByName(ts[0].Name)
 					if err != nil {
-						fmt.Println(err)
+						log.Error(err)
 						driver.DeclineOffer(offer.Id)
 						return
 					}
 
 					//todo: set dag state to running
-					executor.Command.Value = proto.String(job.Command)
+					executor.Command.Value = proto.String("./example_executor " + job.Command)
+					log.Debug(job.Command, *executor.Command.Value)
 
 					tasks := []mesos.TaskInfo{
 						mesos.TaskInfo{
@@ -118,7 +123,7 @@ func (self *ResMan) Run() {
 
 			StatusUpdate: func(driver *mesos.SchedulerDriver, status mesos.TaskStatus) {
 				taskId := *status.TaskId
-				log.Debug("Received task status: "+*status.Message+"taskId"+*taskId.Value, *status.State)
+				log.Debug("Received task status: "+*status.Message+", taskId"+*taskId.Value, *status.State)
 				switch *status.State {
 				case mesos.TaskState_TASK_FINISHED:
 					var ti TyrantTaskId
@@ -146,11 +151,11 @@ func (self *ResMan) Run() {
 			},
 
 			Error: func(driver *mesos.SchedulerDriver, err string) {
-				fmt.Printf("%s\n", err)
+				log.Errorf("%s\n", err)
 			},
 
 			Disconnected: func(driver *mesos.SchedulerDriver) {
-				fmt.Print("Disconnected")
+				log.Warning("Disconnected")
 			},
 		},
 	}
