@@ -5,6 +5,8 @@ import (
 	"flag"
 	"os"
 	"path/filepath"
+	"strconv"
+	"time"
 
 	log "github.com/ngaut/logging"
 
@@ -72,6 +74,7 @@ func (self *ResMan) Run() {
 				for _, offer := range offers {
 					td := self.s.GetReadyDag()
 					if td == nil {
+						log.Debug("no ready dag")
 						driver.DeclineOffer(offer.Id)
 						return
 					}
@@ -98,6 +101,7 @@ func (self *ResMan) Run() {
 
 					//todo: set dag state to running
 					executor.Command.Value = proto.String("./example_executor " + job.Command)
+					executor.ExecutorId = &mesos.ExecutorID{Value: proto.String("tyrantExecutorId_" + strconv.Itoa(taskId) + strconv.Itoa(time.Now().Day()))}
 					log.Debug(job.Command, *executor.Command.Value)
 
 					tasks := []mesos.TaskInfo{
@@ -131,7 +135,15 @@ func (self *ResMan) Run() {
 					if err != nil {
 						log.Fatal(err)
 					}
-					self.s.GetTaskDag(ti.DagName).RemoveTask(ti.TaskName)
+					td := self.s.GetTaskDag(ti.DagName)
+					td.RemoveTask(ti.TaskName)
+					if td.Dag.Empty() {
+						log.Debug("task in dag %s is empty", td.DagName)
+						self.s.RemoveTaskDag(td.DagName)
+						return
+					}
+
+					self.s.SetTaskDagStateReady(ti.DagName)
 					//todo:remove from task
 				case mesos.TaskState_TASK_FAILED:
 					//todo: retry

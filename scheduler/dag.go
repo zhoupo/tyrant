@@ -215,6 +215,14 @@ func (self *DGraph) ExportDot(fname string) {
 	io.WriteString(file, "\n}")
 }
 
+func (self *DGraph) Empty() bool {
+	if len(self.root.OutEdge) == 0 {
+		return true
+	}
+
+	return false
+}
+
 func (self *DGraph) Lookup(name string) *Vertex {
 	//log.Debug("Lookup", name)
 	return self.root.lookup(name)

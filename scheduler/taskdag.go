@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	taskCreate = 1
+	taskReady  = 1
 	taskRuning = 2
 )
 
@@ -24,7 +24,7 @@ type TaskDag struct {
 }
 
 func NewTaskDag(name string, meta *DagMeta) *TaskDag {
-	td := &TaskDag{DagName: name, Dag: NewDag(), state: taskCreate,
+	td := &TaskDag{DagName: name, Dag: NewDag(), state: taskReady,
 		dagMeta: meta,
 	}
 	log.Debug("create TaskDag", name)
@@ -150,7 +150,7 @@ func (self *TaskScheduler) RemoveTaskDag(name string) {
 
 func (self *TaskScheduler) GetReadyDag() *TaskDag {
 	for _, td := range self.tds {
-		if td.state == taskCreate {
+		if td.state == taskReady {
 			return td
 		}
 	}
@@ -165,6 +165,15 @@ func (self *TaskScheduler) SetTaskDagStateRunning(name string) {
 	}
 
 	td.state = taskRuning
+}
+
+func (self *TaskScheduler) SetTaskDagStateReady(name string) {
+	td, ok := self.tds[name]
+	if !ok {
+		return
+	}
+
+	td.state = taskReady
 }
 
 func (self *TaskScheduler) Refresh() {
