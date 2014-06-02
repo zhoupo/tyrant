@@ -138,7 +138,7 @@ func (self *ResMan) Run() {
 					td := self.s.GetTaskDag(ti.DagName)
 					td.RemoveTask(ti.TaskName)
 					if td.Dag.Empty() {
-						log.Debug("task in dag %s is empty", td.DagName)
+						log.Debugf("task in dag %s is empty", td.DagName)
 						self.s.RemoveTaskDag(td.DagName)
 						return
 					}

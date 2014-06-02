@@ -32,7 +32,16 @@ func NewTaskDag(name string, meta *DagMeta) *TaskDag {
 }
 
 func getParents(parents string) []string {
-	return strings.Split(parents, ",")
+	ss := strings.Split(parents, ",")
+	ps := make([]string, 0)
+	for _, s := range ss { //trim blank
+		ts := strings.Trim(s, " ")
+		if len(ts) > 0 {
+			ps = append(ps, ts)
+		}
+	}
+
+	return ps
 }
 
 func getRoot(jobs map[string]*DagJob, name string) string {
@@ -40,15 +49,11 @@ func getRoot(jobs map[string]*DagJob, name string) string {
 	parents := getParents(parentstr)
 	log.Debug(name, "parents", parents, len(parents))
 	for _, p := range parents {
-		if len(p) == 0 {
-			break
-		}
-
 		pp, ok := jobs[p]
-		if !ok || len(getParents(pp.JobName)) == 0 {
-			return p
+		if ok {
+			return getRoot(jobs, pp.JobName)
 		}
-		return getRoot(jobs, pp.JobName)
+		continue
 	}
 
 	return name
