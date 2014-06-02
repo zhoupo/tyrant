@@ -80,7 +80,7 @@ func (self *ResMan) Run() {
 					}
 					log.Debugf("got ready dag: %+v", td)
 					td.Dag.ExportDot(td.DagName + ".dot")
-					ts := td.GetReadyTask()
+					ts := td.GetReadyTask() //todo:make sure schedule time is match
 					if len(ts) == 0 {
 						driver.DeclineOffer(offer.Id)
 						return
