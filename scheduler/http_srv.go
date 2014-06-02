@@ -73,6 +73,18 @@ func newJobHandler(w http.ResponseWriter, r *http.Request) {
 	response(w, http.StatusOK, string(content))
 }
 
+func removeJobHandler(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	name := r.FormValue("name")
+	j, _ := GetJobByName(name)
+	if j != nil {
+		j.Remove()
+		response(w, http.StatusOK, "")
+	} else {
+		response(w, http.StatusNotFound, "no such job")
+	}
+}
+
 func newDagHandler(w http.ResponseWriter, r *http.Request) {
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -132,10 +144,11 @@ func removeDagJob(w http.ResponseWriter, r *http.Request) {
 func (srv *Server) Serve() {
 	http.HandleFunc("/job/list", jobsListHandler)
 	http.HandleFunc("/job/new", newJobHandler)
+	http.HandleFunc("/job/remove", removeJobHandler)
 	http.HandleFunc("/job/update", updateJobHandler)
 	http.HandleFunc("/dag/new", newDagHandler)
 	http.HandleFunc("/dag/job/add", addDagJob)
-	http.HandleFunc("/dag/job/remove", addDagJob)
+	http.HandleFunc("/dag/job/remove", removeDagJob)
 	addr, _ := globalCfg.ReadString("http_addr", ":9090")
 	log.Fatal(http.ListenAndServe(addr, nil))
 }
