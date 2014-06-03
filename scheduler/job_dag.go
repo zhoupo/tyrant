@@ -113,12 +113,21 @@ func (d *DagMeta) AddDagJob(j *DagJob) error {
 	j.DagName = d.Name
 
 	var dagJobs []DagJob
-	_, err := sharedDbMap.Select(&dagJobs, "select * from dagjobs where dag_name = ? limit 1", d.Name)
+	_, err := sharedDbMap.Select(&dagJobs, "select * from dagjobs where dag_name = ?", d.Name)
 	if err != nil {
 		return err
 	}
 
-	if len(dagJobs) > 0 {
+	exist := false
+
+	for _, job := range dagJobs {
+		if job.JobName == j.JobName {
+			exist = true
+			break
+		}
+	}
+
+	if exist {
 		return fmt.Errorf("job %s already exist", j.JobName)
 	}
 
