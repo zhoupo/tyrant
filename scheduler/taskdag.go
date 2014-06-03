@@ -69,7 +69,7 @@ func (self *TaskDag) addTask(jobs map[string]*DagJob) {
 
 		r := getRoot(jobs, name)
 		log.Debugf("add %s to %s", r, self.DagName)
-		err := self.Dag.AddVertex(r, &Task{Name: r, job: jobs[r]}, getParents(jobs[name].ParentJob))
+		err := self.Dag.AddVertex(r, &Task{Name: r, job: jobs[r]}, getParents(jobs[r].ParentJob))
 		if err != nil {
 			log.Error(err)
 		}

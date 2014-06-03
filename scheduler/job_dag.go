@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	log "github.com/ngaut/logging"
+
 	"github.com/gorhill/cronexpr"
 )
 
@@ -79,6 +81,7 @@ func (dag *DagMeta) GetDagJobs() []DagJob {
 	var dagJobs []DagJob
 	_, err := sharedDbMap.Select(&dagJobs, "select * from dagjobs where dag_name = ?", dag.Name)
 	if err != nil {
+		log.Error(err)
 		return nil
 	}
 	return dagJobs
@@ -108,6 +111,17 @@ func (dag *DagMeta) AutoRunSignal() (bool, <-chan *DagMeta) {
 
 func (d *DagMeta) AddDagJob(j *DagJob) error {
 	j.DagName = d.Name
+
+	var dagJobs []DagJob
+	_, err := sharedDbMap.Select(&dagJobs, "select * from dagjobs where dag_name = ? limit 1", d.Name)
+	if err != nil {
+		return err
+	}
+
+	if len(dagJobs) > 0 {
+		return fmt.Errorf("job %s already exist", j.JobName)
+	}
+
 	return sharedDbMap.Insert(j)
 }
 
