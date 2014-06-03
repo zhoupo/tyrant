@@ -1,8 +1,10 @@
 package scheduler
 
 import (
-	"github.com/gorhill/cronexpr"
+	"fmt"
 	"time"
+
+	"github.com/gorhill/cronexpr"
 )
 
 type DagJob struct {
@@ -63,8 +65,14 @@ func (j *DagJob) Save() error {
 		return err
 	}
 }
+
 func (j *DagJob) Remove() {
 	sharedDbMap.Delete(j)
+}
+
+func (j DagJob) String() string {
+	return fmt.Sprintf("DagJob{DagName:%s, Id:%d, JobName:%s, ParentJob:%s}",
+		j.DagName, j.Id, j.JobName, j.ParentJob)
 }
 
 func (dag *DagMeta) GetDagJobs() []DagJob {

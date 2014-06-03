@@ -189,10 +189,9 @@ func (self *TaskScheduler) Refresh() {
 			continue
 		}
 
-		log.Debugf("add dagMeta: %+v", m)
-
 		td := NewTaskDag(m.Name, &m)
 		tmp := m.GetDagJobs()
+		log.Debugf("add dagMeta: %+v, jobs:%+v", m, tmp)
 		jobs := make([]*DagJob, len(tmp))
 		for i := 0; i < len(jobs); i++ {
 			jobs[i] = &tmp[i]
